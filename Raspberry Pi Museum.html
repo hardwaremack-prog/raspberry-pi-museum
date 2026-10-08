@@ -220,6 +220,14 @@ select,.txt{font:inherit;font-size:14px;color:var(--ink);background:var(--wall);
 .code{position:relative;background:#141917;color:#dfe8e2;font-family:var(--f-mono);font-size:12.5px;padding:10px 12px;overflow-x:auto;white-space:pre;margin:0;border-radius:2px}
 .copy{align-self:flex-start;border:1px solid var(--rule);background:var(--plinth);font-size:12px;padding:4px 10px;cursor:pointer}
 
+/* Overclocking */
+.oc-steps{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14.5px}
+table.oc{min-width:980px}
+table.oc td{font-size:13.5px}
+table.oc td.set{min-width:230px}
+table.oc .code{font-size:12px;padding:8px 10px}
+table.oc .copy{margin-top:6px}
+.gain{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:500;color:var(--good)}
 /* Accessories + variants */
 .acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:26px 20px}
 .acc{display:flex;flex-direction:column;min-width:0}
@@ -257,7 +265,7 @@ select,.txt{font:inherit;font-size:14px;color:var(--ink);background:var(--wall);
     </figure>
   </header>
   <nav class="topnav" aria-label="Rooms"><div>
-    <a href="#timeline">Timeline</a><a href="#galleries">Galleries</a><a href="#compare">Compare</a><a href="#speed">Speed lab</a><a href="#ai">AI lab</a><a href="#workbench">Workbench</a><a href="#accessories">Accessories</a><a href="#variants">Variants</a><a href="#specwall">Spec wall</a><a href="#prices">Prices</a><a href="#future">Future wing</a>
+    <a href="#timeline">Timeline</a><a href="#galleries">Galleries</a><a href="#compare">Compare</a><a href="#speed">Speed lab</a><a href="#ai">AI lab</a><a href="#workbench">Workbench</a><a href="#overclock">Overclocking</a><a href="#accessories">Accessories</a><a href="#variants">Variants</a><a href="#specwall">Spec wall</a><a href="#prices">Prices</a><a href="#future">Future wing</a>
   </div></nav>
 
   <div class="rail-head" id="timeline" style="scroll-margin-top:60px">
@@ -355,6 +363,32 @@ select,.txt{font:inherit;font-size:14px;color:var(--ink);background:var(--wall);
         <div class="fixes" id="fixes"></div>
       </div>
     </div>
+  </section>
+
+  <section id="overclock">
+    <div class="section-h"><h2>Overclocking table</h2><p>Common, well-tested starting points for every board. Each chip is different, so some boards go further and some won't manage these.</p></div>
+    <div class="two" style="margin-bottom:22px">
+      <div class="panel">
+        <h3>Before you start</h3>
+        <ul class="oc-steps">
+          <li>Use the recommended power supply. Overclocks fail first on weak supplies.</li>
+          <li>Add the cooling listed. A board that hits its thermal limit throttles back and loses the gain.</li>
+          <li>Add the lines to <code>/boot/firmware/config.txt</code> (<code>/boot/config.txt</code> on older releases), save and reboot.</li>
+          <li>Raise one step at a time and stress-test for 10 minutes or more before going further.</li>
+          <li>If it won't boot, put the SD card in another computer and delete the lines you added.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Test and watch it</h3>
+        <pre class="code" id="ocTest">sudo apt install stress-ng
+stress-ng --cpu 4 --timeout 10m &amp;
+watch -n 2 'vcgencmd measure_clock arm; vcgencmd measure_temp; vcgencmd get_throttled'</pre>
+        <button class="copy" data-copy="ocTest" style="margin-top:8px">Copy</button>
+        <p class="fine">You want the clock to stay at your target, the temperature under about 80 °C, and get_throttled to read 0x0. Anything else means back off or cool it better.</p>
+      </div>
+    </div>
+    <div class="tablebox"><table id="ocTable" class="oc"><thead><tr><th>Board</th><th>Stock</th><th>Overclock</th><th>Gain</th><th>Settings</th><th>Cooling needed</th><th>Notes</th></tr></thead><tbody></tbody></table></div>
+    <p class="fine">On boards before the Pi 4, over_voltage above 6 together with force_turbo sets a permanent warranty bit in the chip. Pi 4 and later use a different voltage system. The Pico settings are MicroPython; in C use <code>set_sys_clock_khz()</code>.</p>
   </section>
 
   <section id="accessories">
@@ -944,6 +978,22 @@ $('#priceChart').innerHTML=PRICES.map((r,i)=>`<div class="brow"><div class="lab"
 function prRead(i){const r=PRICES[i];$('#prRead').textContent=`${r[0]}: $${r[1]} at launch${r[2]!=null?`, $${r[2]} after December 2025`:''}${r[3]?`, +$${r[3]} in April 2026`:', no April 2026 change'}${r[0]==='Pi 500+'?' (reported at $350)':''}.`}
 ['mouseover','focusin','click'].forEach(t=>$('#priceChart').addEventListener(t,e=>{const tr=e.target.closest('.track');if(tr)prRead(tr.dataset.i)}));
 $('#priceTable tbody').innerHTML=PRICES.map(r=>`<tr class="row" data-id="${r[4]}" tabindex="0"><td>${r[0]}</td><td class="num">$${r[1]}</td><td class="num">${r[2]!=null?'$'+r[2]:'not published'}</td><td class="num">${r[3]?'+$'+r[3]:'none'}</td><td class="num">$${now(r)}</td></tr>`).join('');
+
+/* ---------- Overclocking table ---------- */
+const OC=[
+['Pi 1 A, B, B+, A+, CM1','pi1b','700 MHz','1000 MHz','+43%','arm_freq=1000\ncore_freq=500\nsdram_freq=600\nover_voltage=6','None','The raspi-config "Turbo" preset. Some SD cards corrupted at this setting; drop sdram_freq to 500 if you see errors.'],
+['Zero, Zero W','zero','1000 MHz','1100 MHz','+10%','arm_freq=1100\nover_voltage=6','None, or a small heatsink','Not every board manages it. The single ARM11 core is the limit, not heat.'],
+['Pi 2 Model B','pi2b','900 MHz','1000 MHz','+11%','arm_freq=1000\ncore_freq=500\nsdram_freq=500\nover_voltage=2','None','The raspi-config "Pi 2" preset.'],
+['Zero 2 W','zero2w','1000 MHz','1200 MHz','+20%','arm_freq=1200\nover_voltage=6','Small heatsink','Warms up fast in a closed case; it throttles at 80 °C.'],
+['Pi 3 Model B, CM3','pi3b','1200 MHz','1300 MHz','+8%','arm_freq=1300\nover_voltage=4','Heatsink, ideally a fan','Gains are small because it already throttles under heavy load at stock.'],
+['Pi 3 B+, 3 A+, CM3+','pi3bplus','1400 MHz','1500 MHz','+7%','arm_freq=1500\nover_voltage=4','Heatsink','The heat spreader helps, but it soft-limits at 60 °C by default; temp_soft_limit=70 raises that.'],
+['Pi 4, CM4 (1.5 GHz boards)','pi4b','1500 MHz','2000 MHz','+33%','arm_freq=2000\nover_voltage=6\ngpu_freq=750','Fan or large heatsink','The best value overclock. Boards made from 2021 already run 1.8 GHz stock.'],
+['Pi 4 (1.8 GHz boards), Pi 400','pi400','1800 MHz','2147 MHz','+19%','arm_freq=2147\nover_voltage=6\ngpu_freq=750','Pi 400: none. Pi 4: fan','2147 MHz is the highest setting the Pi 4 firmware normally accepts.'],
+['Pi 5, CM5','pi5','2400 MHz','3000 MHz','+25%','arm_freq=3000\nover_voltage_delta=50000\n# lower to 2800 if unstable','Active Cooler (required)','Many boards manage 2.8 to 3.0 GHz. Uses over_voltage_delta in microvolts, not over_voltage.'],
+['Pi 500, Pi 500+','pi500','2400 MHz','2800 MHz','+17%','arm_freq=2800\nover_voltage_delta=50000','None; internal heat spreader','The keyboard\u2019s heat spreader is big but passive, so stay a step below a fan-cooled Pi 5.'],
+['Pico, Pico W (RP2040)','pico','133 MHz','250 MHz','+88%','import machine\nmachine.freq(250_000_000)','None','Above about 270 MHz the flash chip may need a slower clock divider in C builds.'],
+['Pico 2, Pico 2 W (RP2350)','pico2','150 MHz','250 MHz','+67%','import machine\nmachine.freq(250_000_000)','None','Not guaranteed by the datasheet. Test with your own code.']];
+$('#ocTable tbody').innerHTML=OC.map(([n,id,a,b,g,c,cool,note],i)=>`<tr><td><button class="link" data-open="${id}">${n}</button></td><td class="num">${a}</td><td class="num"><b>${b}</b></td><td class="gain">${g}</td><td class="set"><pre class="code" id="oct${i}">${c}</pre><button class="copy" data-copy="oct${i}">Copy</button></td><td>${cool}</td><td>${note}</td></tr>`).join('');
 </script>
 
 </body>

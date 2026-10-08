@@ -22,6 +22,8 @@ when online and fall back to system fonts offline).
 - **Speed lab**: one-core and all-core speed for every generation, with the 2012 Model B = 1.
 - **AI lab**: tokens-per-second for local language models (SmolLM2 135M up to DeepSeek R1 14B)
   on every board, with a live typing demo and a full board-by-model table.
+- **Overclocking table**: stock and tested overclock speeds for every board, the gain, the
+  `config.txt` lines to copy, the cooling each needs, and how to stress-test safely.
 - **Workbench**: identify your Pi from `/proc/cpuinfo`, an interactive 40-pin GPIO map,
   a "Which Pi should I buy?" picker, and 14 copy-paste fix-it cards.
 - **Accessories wing** (cameras, displays, HATs, cooler, power supply, SSD), **Variants and
@@ -34,6 +36,8 @@ when online and fall back to system fonts offline).
 ![AI lab](screenshot-ai-lab.png)
 
 ![Workbench](screenshot-workbench.png)
+
+![Overclocking](screenshot-overclock.png)
 
 ## Notes
 
